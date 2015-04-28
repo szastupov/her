@@ -37,7 +37,7 @@ def hn(her, tokens):
 		surl = "https://hacker-news.firebaseio.com/v0/item/%s.json" % top[i]
 		story = requests.get(surl).json()
 		top_stories.append("{title} -- {url}".format(**story))
-	her.say("Вот ТОП:")
+	her.say("Вот ТОП:\n")
 	her.write("\n".join(top_stories))
 
 
@@ -46,7 +46,7 @@ WORDS = {
 	"привет": "Привет!",
 	"пока|чмоки": "Пока 😘|Давай, увидимся!",
 	"как тебя зовут": "Я - Она, Она - Я",
-	"как дела": "да не плохо",
+	"как дела": "да неплохо",
 	"курс|почем": currency,
 	"команды": cmds,
 	"биткоин|bitcoin": bitcoin,

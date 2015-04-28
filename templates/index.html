@@ -9,6 +9,7 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="static/jquery.linkify.min.js"></script>
 
     <style>
       .console-input {
@@ -39,7 +40,7 @@ You: <input id="input" type="text" class="console-input" autofocus>
 
       function appendText(txt) {
         text += txt + "\n";
-        $("#history").text(text);
+        $("#history").text(text).linkify();
       }
 
       function sendHer(msg) {
