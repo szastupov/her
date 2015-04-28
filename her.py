@@ -1,32 +1,33 @@
 import requests
 import re
 
-def currency(tokens):
+def currency(her, tokens):
 	url = "https://query.yahooapis.com/v1/public/yql?q=" \
 		  "select+*+from+yahoo.finance.xchange+where+pair+=+%22USDRUB,EURRUB%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 	res = requests.get(url).json()
 	rates = res["query"]["results"]["rate"]
 	text = ", ".join(["{Name} {Rate}".format(**r) for r in rates])
-	say(text)
+	
+	her.say(text)
 
-def bitcoin(tokens):
+def bitcoin(her, tokens):
 	url = "https://api.bitcoinaverage.com/ticker/global/USD/"
 	res = requests.get(url).json()
-	say(res["24h_avg"], "USD")
+	her.say(res["24h_avg"], "USD")
 
-def cmds(tokens):
+def cmds(her, tokens):
 	for cmd in WORDS:
-		print(cmd)
+		her.write(cmd, "\n")
 
-def google(tokens):
+def google(her, tokens):
 	url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + " ".join(tokens[1:])
 	results = requests.get(url).json()["responseData"]["results"]
-	say("Вот что я нашла:")
-	for res in results:
-		print(res["titleNoFormatting"], " - ", res["unescapedUrl"])
+	items = ["{titleNoFormatting} -- {unescapedUrl}".format(**r) for r in results]
+	her.say("Вот что я нашла:\n")
+	her.write("\n".join(items))
 
 
-def hn(tokens):
+def hn(her, tokens):
 	url = "https://hacker-news.firebaseio.com/v0/topstories.json"
 	top = requests.get(url).json()
 
@@ -35,8 +36,8 @@ def hn(tokens):
 		surl = "https://hacker-news.firebaseio.com/v0/item/%s.json" % top[i]
 		story = requests.get(surl).json()
 		top_stories.append("{title} -- {url}".format(**story))
-	say("Вот ТОП:")
-	print ("\n".join(top_stories))
+	her.say("Вот ТОП:")
+	her.write("\n".join(top_stories))
 
 
 WORDS = {
@@ -52,40 +53,52 @@ WORDS = {
 	"hn|в тренде": hn
 }
 
-def say(*w):
-	print("Она:", *w)
-
-def do(a, tokens):
-	if type(a) is str:
-		say(a)
-	else:
-		try:
-			a(tokens)
-		except Exception as e:
-			raise e
-			say("Воу-воу-воу, потише! У меня даже что-то сломалось :/")
-
 MAP = {}
 for (rule, act) in WORDS.items():
 	keys = rule.split("|")
 	for key in keys:
 		MAP[key] = act
 
-def main():
-	while True:
-		try:
-			phrase = input("Ты: ").lower()
-		except EOFError:
-			say("Пока 😘")
-			break
-
+class Her(object):
+	def tell(self, phrase):
+		self.buf = ""
+		phrase = phrase.lower()
 		ntokens = re.sub(r"\.|,|\?|!", " ", phrase).split()
 		nphrase = " ".join(ntokens)
 
 		for word in MAP:
 			if word in nphrase:
-				do(MAP[word], ntokens)
+				self.do(MAP[word], ntokens)
 				break
+
+		return self.buf
+
+	def write(self, *args):
+		self.buf += " ".join(args)
+
+	def say(self, *w):
+		strs = map(str, w)
+		self.write("Она:", *strs)
+
+	def do(self, a, tokens):
+		if type(a) is str:
+			self.say(a)
+		else:
+			try:
+				a(self, tokens)
+			except Exception as e:
+				raise e
+				say("Воу-воу-воу, потише! У меня даже что-то сломалось :/")
+
+def main():
+	her = Her()
+	while True:
+		try:
+			phrase = input("Ты: ")
+		except EOFError:
+			her.say("Пока 😘")
+			break
+		print(her.tell(phrase))
 
 	#say("Я тебя не понимаю 😳")
 
