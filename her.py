@@ -1,5 +1,6 @@
 import requests
 import re
+import random
 
 def currency(her, tokens):
 	url = "https://query.yahooapis.com/v1/public/yql?q=" \
@@ -43,6 +44,7 @@ def hn(her, tokens):
 WORDS = {
 	"hi": "хаюшки!",
 	"привет": "Привет!",
+	"пока|чмоки": "Пока 😘|Давай, увидимся!",
 	"как тебя зовут": "Я - Она, Она - Я",
 	"как дела": "да не плохо",
 	"курс|почем": currency,
@@ -62,6 +64,8 @@ for (rule, act) in WORDS.items():
 class Her(object):
 	def tell(self, phrase):
 		self.buf = ""
+		found = False
+
 		phrase = phrase.lower()
 		ntokens = re.sub(r"\.|,|\?|!", " ", phrase).split()
 		nphrase = " ".join(ntokens)
@@ -69,7 +73,11 @@ class Her(object):
 		for word in MAP:
 			if word in nphrase:
 				self.do(MAP[word], ntokens)
+				found = True
 				break
+
+		if not found:
+			self.say("Я тебя не понимаю 😳")
 
 		return self.buf
 
@@ -82,13 +90,14 @@ class Her(object):
 
 	def do(self, a, tokens):
 		if type(a) is str:
-			self.say(a)
+			variants = a.split("|")
+			self.say(random.choice(variants))
 		else:
 			try:
 				a(self, tokens)
 			except Exception as e:
 				raise e
-				say("Воу-воу-воу, потише! У меня даже что-то сломалось :/")
+				self.say("Воу-воу-воу, потише! У меня даже что-то сломалось :/")
 
 def main():
 	her = Her()
@@ -99,8 +108,6 @@ def main():
 			her.say("Пока 😘")
 			break
 		print(her.tell(phrase))
-
-	#say("Я тебя не понимаю 😳")
 
 
 if __name__ == '__main__':
