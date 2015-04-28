@@ -2,10 +2,12 @@ import requests
 import re
 import random
 
+http = requests.Session()
+
 def currency(her, tokens):
 	url = "https://query.yahooapis.com/v1/public/yql?q=" \
 		  "select+*+from+yahoo.finance.xchange+where+pair+=+%22USDRUB,EURRUB%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
-	res = requests.get(url).json()
+	res = http.get(url).json()
 	rates = res["query"]["results"]["rate"]
 	text = ", ".join(["{Name} {Rate}".format(**r) for r in rates])
 	
@@ -13,7 +15,7 @@ def currency(her, tokens):
 
 def bitcoin(her, tokens):
 	url = "https://api.bitcoinaverage.com/ticker/global/USD/"
-	res = requests.get(url).json()
+	res = http.get(url).json()
 	her.say(res["24h_avg"], "USD")
 
 def cmds(her, tokens):
@@ -22,7 +24,7 @@ def cmds(her, tokens):
 
 def google(her, tokens):
 	url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + " ".join(tokens[1:])
-	results = requests.get(url).json()["responseData"]["results"]
+	results = http.get(url).json()["responseData"]["results"]
 	items = ["{titleNoFormatting} -- {unescapedUrl}".format(**r) for r in results]
 	her.say("Вот что я нашла:\n")
 	her.write("\n".join(items))
@@ -30,12 +32,12 @@ def google(her, tokens):
 
 def hn(her, tokens):
 	url = "https://hacker-news.firebaseio.com/v0/topstories.json"
-	top = requests.get(url).json()
+	top = http.get(url).json()
 
 	top_stories = []
 	for i in range(5):
 		surl = "https://hacker-news.firebaseio.com/v0/item/%s.json" % top[i]
-		story = requests.get(surl).json()
+		story = http.get(surl).json()
 		top_stories.append("{title} -- {url}".format(**story))
 	her.say("Вот ТОП:\n")
 	her.write("\n".join(top_stories))
@@ -48,7 +50,7 @@ WORDS = {
 	"как тебя зовут": "Я - Она, Она - Я|Скарлет Йохансен... шутка",
 	"как дела": "да неплохо|как сажа бела|да норм, че",
 	"заебись": "а то!",
-	"курс|почем": currency,
+	"курс|почем|currency": currency,
 	"команды": cmds,
 	"биткоин|bitcoin": bitcoin,
 	"смысл жизни": "42",
