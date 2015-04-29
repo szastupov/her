@@ -6,14 +6,43 @@ import unicodedata as ud
 
 http = requests.Session()
 
+def yahoo_url(pairs):
+    return "https://query.yahooapis.com/v1/public/yql?q=" \
+          "select+*+from+yahoo.finance.xchange+where+pair+=+%22" + pairs + \
+          "%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+
 def currency(her, m):
-    url = "https://query.yahooapis.com/v1/public/yql?q=" \
-          "select+*+from+yahoo.finance.xchange+where+pair+=+%22USDRUB,EURRUB%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
+    url = yahoo_url("USDRUB,EURRUB")
     res = http.get(url).json()
     rates = res["query"]["results"]["rate"]
     text = ", ".join(["{Name} {Rate}".format(**r) for r in rates])
     
     her.say(text)
+
+def currency_coversion(her, m):
+    amount = m.group(1)
+    source = m.group(2)
+    target = m.group(3)
+
+    table = {
+        "USD": r"доллар??",
+        "RUB": r"рубл??",
+        "EUR": r"евро"
+    }
+
+    for (cur, expr) in table.items():
+        if re.match(expr, source):
+            source = cur
+        if re.match(expr, target):
+            target = cur
+
+    url = yahoo_url(source+target)
+    res = http.get(url).json()
+    rates = res["query"]["results"]["rate"]
+
+    converted = float(rates["Rate"]) * float(amount)
+
+    her.say(converted, target)
 
 def bitcoin(her, m):
     url = "https://api.bitcoinaverage.com/ticker/global/USD/"
@@ -25,7 +54,7 @@ def cmds(her, m):
         her.write(cmd, "\n")
 
 def google(her, m):
-    url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + " ".join(m.group(2))
+    url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + m.group(2)
     results = http.get(url).json()["responseData"]["results"]
     items = ["{titleNoFormatting} -- {unescapedUrl}".format(**r) for r in results]
 
@@ -72,10 +101,11 @@ WORDS = {
     r"заебись": "а то!",
 
     r"курс|почем|currency": currency,
+    r"(\d+) (рубля|рублей|доллара|долларов|евро) к (рублю|доллару|евро)": currency_coversion,
     r"команды": cmds,
     r"биткоин|bitcoin": bitcoin,
     r"смысл жизни": "42",
-    r"(google|погугли) (.*)": google,
+    r"(google|погугли|найди) (.*)": google,
     r"hn|в тренде": hn,
     r"напомни (.*)": remind,
     r"(что такое|what is|define) (.*)": summary
@@ -117,8 +147,8 @@ class Her(object):
             try:
                 a(self, tokens)
             except Exception as e:
-                raise e
                 self.say("Воу-воу-воу, потише! У меня даже что-то сломалось :/")
+                raise e
 
 def main():
     her = Her()
