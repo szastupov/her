@@ -1,96 +1,6 @@
-import requests
 import re
 import random
-import wikipedia
-import unicodedata as ud
-
-http = requests.Session()
-
-def yahoo_url(pairs):
-    return "https://query.yahooapis.com/v1/public/yql?q=" \
-          "select+*+from+yahoo.finance.xchange+where+pair+=+%22" + pairs + \
-          "%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
-
-def currency(her, m):
-    url = yahoo_url("USDRUB,EURRUB")
-    res = http.get(url).json()
-    rates = res["query"]["results"]["rate"]
-    text = ", ".join(["{Name} {Rate}".format(**r) for r in rates])
-    
-    her.say(text)
-
-def currency_coversion(her, m):
-    amount = m.group(1)
-    source = m.group(2)
-    target = m.group(3)
-
-    table = {
-        "USD": r"доллар??",
-        "RUB": r"рубл??",
-        "EUR": r"евро"
-    }
-
-    for (cur, expr) in table.items():
-        if re.match(expr, source):
-            source = cur
-        if re.match(expr, target):
-            target = cur
-
-    url = yahoo_url(source+target)
-    res = http.get(url).json()
-    rates = res["query"]["results"]["rate"]
-
-    converted = float(rates["Rate"]) * float(amount)
-
-    her.say(converted, target)
-
-def bitcoin(her, m):
-    url = "https://api.bitcoinaverage.com/ticker/global/USD/"
-    res = http.get(url).json()
-    her.say(res["24h_avg"], "USD")
-
-def cmds(her, m):
-    for cmd in WORDS:
-        her.write(cmd, "\n")
-
-def google(her, m):
-    url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + m.group(2)
-    results = http.get(url).json()["responseData"]["results"]
-    items = ["{titleNoFormatting} -- {unescapedUrl}".format(**r) for r in results]
-
-    her.say("Вот что я нашла:\n")
-    her.write("\n".join(items))
-
-
-def hn(her, m):
-    url = "https://hacker-news.firebaseio.com/v0/topstories.json"
-    top = http.get(url).json()
-
-    top_stories = []
-    for i in range(5):
-        surl = "https://hacker-news.firebaseio.com/v0/item/%s.json" % top[i]
-        story = http.get(surl).json()
-        top_stories.append("{title} -- {url}".format(**story))
-    her.say("Вот ТОП:\n")
-    her.write("\n".join(top_stories))
-
-def remind(her, m):
-    task = m.group(1)
-    her.say("Я бы напомнила тебе '%s', но пока не умею" % task)
-
-def summary(her, m):
-    query = m.group(2)
-
-    uname = ud.name(query[0])
-    if "CYRILLIC" in uname:
-        wikipedia.set_lang("ru")
-    else:
-        wikipedia.set_lang("en")
-
-    res = wikipedia.summary(query, sentences=2)
-    page = wikipedia.page(query)
-    her.say("%s\n%s" % (res, page.url))
-
+from plugins import PLUGINS
 
 WORDS = {
     r"hi": "хаюшки!",
@@ -99,19 +9,15 @@ WORDS = {
     r"как тебя зовут": "Я - Она, Она - Я|Скарлет Йохансен... шутка",
     r"как дела": "да неплохо|как сажа бела|да норм, че",
     r"заебись": "а то!",
-
-    r"курс|почем|currency": currency,
-    r"(\d+) (рубля|рублей|доллара|долларов|евро) к (рублю|доллару|евро)": currency_coversion,
-    r"команды": cmds,
-    r"биткоин|bitcoin": bitcoin,
-    r"смысл жизни": "42",
-    r"(google|погугли|найди) (.*)": google,
-    r"hn|в тренде": hn,
-    r"напомни (.*)": remind,
-    r"(что такое|what is|define) (.*)": summary
+    r"смысл жизни": "42"
 }
 
+WORDS.update(PLUGINS)
+
 class Her(object):
+    def __init__(self):
+        self.buf = ""
+
     def tell(self, phrase):
         self.buf = ""
         found = False
