@@ -69,9 +69,9 @@ def cmds(her, m):
         her.write(cmd, "\n")
 
 
-@plugin(r"(google|погугли|найди) (.*)")
+@plugin(r"(?:google|погугли|найди) (.*)")
 def google(her, m):
-    url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + m.group(2)
+    url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=" + m.group(1)
     results = http.get(url).json()["responseData"]["results"]
     items = ["{titleNoFormatting} -- {unescapedUrl}".format(**r) for r in results]
 
@@ -98,6 +98,12 @@ def remind(her, m):
     task = m.group(1)
     her.say("Я бы напомнила тебе '%s', но пока не умею" % task)
 
+
+@plugin(r"создай встречу событие")
+def schedule(her, m):
+    pass
+
+
 def get_language(msg):
     uname = ud.name(msg[0])
     if "CYRILLIC" in uname:
@@ -105,9 +111,9 @@ def get_language(msg):
     else:
         return "en"
 
-@plugin(r"(что такое|what is|define) (.*)")
+@plugin(r"(?:что такое|what is|define) (.*)")
 def summary(her, m):
-    query = m.group(2)
+    query = m.group(1)
     
     wikipedia.set_lang(get_language(query))
     res = wikipedia.summary(query, sentences=2)
@@ -116,9 +122,9 @@ def summary(her, m):
     her.say("%s\n%s" % (res, page.url))
 
 
-@plugin(r"(translate|переведи) (.*)")
+@plugin(r"(?:translate|переведи) (.*)")
 def translate(her, m):
-    message = m.group(2)
+    message = m.group(1)
     lang = get_language(message)
     direction = "ru" if lang == "en" else "en"
 
