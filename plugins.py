@@ -98,17 +98,28 @@ def remind(her, m):
     task = m.group(1)
     her.say("Я бы напомнила тебе '%s', но пока не умею" % task)
 
+def get_language(msg):
+    uname = ud.name(msg[0])
+    if "CYRILLIC" in uname:
+        return "ru"
+    else:
+        return "en"
 
 @plugin(r"(что такое|what is|define) (.*)")
 def summary(her, m):
     query = m.group(2)
-
-    uname = ud.name(query[0])
-    if "CYRILLIC" in uname:
-        wikipedia.set_lang("ru")
-    else:
-        wikipedia.set_lang("en")
-
+    
+    wikipedia.set_lang(get_language(query))
     res = wikipedia.summary(query, sentences=2)
     page = wikipedia.page(query)
+    
     her.say("%s\n%s" % (res, page.url))
+
+
+@plugin(r"(translate|переведи) (.*)")
+def translate(her, m):
+    message = m.group(2)
+    lang = get_language(message)
+    direction = "ru" if lang == "en" else "en"
+
+    her.say("пока не умею переводить с %s на %s" % (lang, direction))
